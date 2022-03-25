@@ -8,6 +8,21 @@ input_dim = 784
 output_dim = 10
 
 
+def relu(z1):
+    h1 = np.maximum(0, z1)
+    return h1
+
+
+def softmax(z2, y):
+    data_size = y.shape[0]
+    z_max = np.max(z2)
+    z_exp = np.exp(z2 - z_max)
+    z_sum = (np.sum(z_exp, axis=1)).reshape(data_size, 1)
+    y_hat = z_exp / z_sum
+    loss = -np.sum(np.log(y_hat) * y) / data_size
+    return y_hat, loss
+
+
 def calc_loss_and_grad(x, y, w1, b1, w2, b2, eval_only=False):
     """Forward Propagation and Backward Propagation.
 
@@ -26,15 +41,25 @@ def calc_loss_and_grad(x, y, w1, b1, w2, b2, eval_only=False):
 
     # TODO
     # forward pass
-    loss, y_hat = None, None
-
+    data_size=x.shape[0]
+    z1 = np.dot(x, w1) + b1
+    h1 = relu(z1)
+    z2 = np.dot(h1, w2) + b2
+    y_hat, loss = softmax(z2, y)
+    # loss, y_hat = None, None
     if eval_only:
         return loss, y_hat
 
     # TODO
     # backward pass
-    db2, dw2, db1, dw1 = None, None, None, None
-
+    # db2, dw2, db1, dw1 = None, None, None, None
+    dy = y_hat - y
+    dw2 = np.dot(np.transpose(h1), dy) / data_size
+    db2 = np.sum(dy, axis=0) / data_size
+    z_sgn = np.maximum(0, np.sign(z1))
+    w2t = np.transpose(w2)
+    dw1 = np.dot(np.transpose(x),np.dot(dy, w2t) * z_sgn) / data_size
+    db1 = np.sum(np.dot(dy, w2t) * z_sgn, axis=0) / data_size
     return loss, db2, dw2, db1, dw1
 
 
@@ -50,7 +75,13 @@ def train(train_x, train_y, test_x, test_y, args: argparse.Namespace):
 
     # TODO
     #  randomly initialize the parameters (weights and biases)
-    w1, b1, w2, b2 = None, None, None, None
+    # w1, b1, w2, b2 = None, None, None, None
+    global batch_size
+    batch_size = args.batch_size
+    w1 = np.random.randn(input_dim, args.hidden_dim) * np.sqrt(2 / input_dim)
+    b1 = np.zeros(args.hidden_dim)
+    w2 = np.random.randn(args.hidden_dim, output_dim) * np.sqrt(2 / args.hidden_dim)
+    b2 = np.zeros(output_dim)
 
     print('Start training:')
     print_freq = 100
@@ -75,10 +106,15 @@ def train(train_x, train_y, test_x, test_y, args: argparse.Namespace):
 
             # TODO
             # compute loss and gradients
-            loss = None
+            # calc_loss_and_grad()
+            loss, db2, dw2, db1, dw1 = calc_loss_and_grad(x_batch, y_batch, w1, b1, w2, b2)
 
             # TODO
             # update parameters
+            w1 = w1 - args.lr * dw1
+            b1 = b1 - args.lr * db1
+            w2 = w2 - args.lr * dw2
+            b2 = b2 - args.lr * db2
 
             loss_curve.append(loss)
             if i % print_freq == 0:
@@ -129,11 +165,11 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Multilayer Perceptron')
     parser.add_argument('--hidden-dim', default=50, type=int,
                         help='hidden dimension of the Multilayer Perceptron')
-    parser.add_argument('--lr', default=0.001, type=float,
+    parser.add_argument('--lr', default=0.01, type=float,
                         help='learning rate')
-    parser.add_argument('--batch-size', default=16, type=int,
+    parser.add_argument('--batch-size', default=10, type=int,
                         help='mini-batch size')
-    parser.add_argument('--epochs', default=10, type=int,
+    parser.add_argument('--epochs', default=100, type=int,
                         help='number of total epochs to run')
     args = parser.parse_args()
     main(args)
