@@ -1,4 +1,5 @@
 import argparse
+import math
 from collections import OrderedDict
 from tqdm import tqdm
 import numpy as np
@@ -6,6 +7,8 @@ import torch
 import torch.nn as nn
 import torch.utils.data as data
 import utils
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
 
 def train(model, train_loader, optimizer, epoch, quiet, grad_clip=None):
@@ -28,7 +31,7 @@ def train(model, train_loader, optimizer, epoch, quiet, grad_clip=None):
     losses = OrderedDict()
     for x in train_loader:
         # move tensor to gpu
-        x = x.cuda()
+        x = x.to(device)
         # calculate loss
         out = model.loss(x)
         # clear grad
@@ -65,7 +68,7 @@ def eval(model, data_loader, quiet):
     total_losses = OrderedDict()
     with torch.no_grad():
         for x in data_loader:
-            x = x.cuda()
+            x = x.to(device)
             out = model.loss(x)
             for k, v in out.items():
                 total_losses[k] = total_losses.get(k, 0) + v.item() * x.shape[0]
@@ -140,16 +143,40 @@ class FullyConnectedVAE(nn.Module):
         self.encoder = MLP(input_dim, 2 * latent_dim, enc_hidden_dims)
         self.decoder = MLP(latent_dim, 2 * input_dim, dec_hidden_dims)
 
+    def encode(self, x):
+        encoded = self.encoder(x)
+        mu = encoded[:, :2]
+        logvar = encoded[:, 2:]
+        return mu, logvar
+
+    def decode(self, z):
+        decoded = self.decoder(z)
+        mux = decoded[:, :2]
+        logvarx = decoded[:, 2:]
+        return mux, logvarx
+
+    def reparameterize(self, mu, logvar):
+        std = torch.exp(0.5 * logvar)
+        eps = torch.randn_like(std)
+        return mu + eps * std
+
     def loss(self, x):
         # TODO
         # perform forward propagation and calculate loss
-        recon_loss, kl_loss = None, None
-
+        mu, logvar = self.encode(x)
+        z = self.reparameterize(mu, logvar)
+        # kl_element = mu.pow(2).add_(logvar.exp()).mul_(-1).add_(1).add_(logvar)
+        # kl_loss = torch.sum(kl_element).mul_(-0.5)
+        kl_loss = -0.5 * torch.sum(1 + 2 * logvar - mu.pow(2) - (logvar.exp()).pow(2))
+        mux, logvarx = self.decode(z)
+        # recon_loss = 0.5*math.log(2*math.pi)+torch.sum(logvarx.add_((x-mux).pow(2).div_(2*(logvarx.exp()).pow(2))))
+        recon_loss = torch.sum(
+            math.log(2 * math.pi) / 2 + logvarx + (x - mux).pow(2).divide(torch.exp(logvarx).pow(2).mul(2)))
         return OrderedDict(loss=recon_loss + kl_loss, recon_loss=recon_loss, kl_loss=kl_loss)
 
     def sample(self, n, noise=True):
         with torch.no_grad():
-            z = torch.randn(n, self.latent_dim).cuda()
+            z = torch.randn(n, self.latent_dim).to(device)
             mu, log_std = self.decoder(z).chunk(2, dim=1)
             if noise:
                 z = torch.randn_like(mu) * log_std.exp() + mu
@@ -174,7 +201,7 @@ def train_vae_and_sample(train_data, test_data, args: argparse.Namespace):
         - a numpy array of size (1000, 2) of 1000 samples WITHOUT decoder noise, i.e. sample z ~ p(z), x = mu(z).
     """
 
-    model = FullyConnectedVAE(2, 2, [128, 128], [128, 128]).cuda()
+    model = FullyConnectedVAE(2, 2, [128, 128], [128, 128]).to(device)
     train_loader = data.DataLoader(train_data, batch_size=args.batch_size, shuffle=True)
     test_loader = data.DataLoader(test_data, batch_size=args.batch_size)
     train_losses, test_losses = train_epochs(model, train_loader, test_loader, args, quiet=True)
