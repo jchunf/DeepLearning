@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="5b844c44-0e47-466e-8694-60cff0c1e4a2" name="103" url="http://192.168.6.103/">
+        <fileTransfer rootFolder="/home/wuhaixu/hw2" accessType="SFTP" host="192.168.6.103" port="22" sshConfigId="9e0d51d0-90f8-4995-951f-3562a3f3c768" sshConfig="wuhaixu@192.168.6.103:22 password">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>
