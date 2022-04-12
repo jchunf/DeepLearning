@@ -5,6 +5,7 @@ import data
 import models
 import os
 
+#jcf
 ## Note that: here we provide a basic solution for training and validation.
 ## You can directly change it if you find something wrong or not good enough.
 
@@ -63,13 +64,13 @@ def train_model(model,train_loader, valid_loader, criterion, optimizer, num_epoc
 
 
 if __name__ == '__main__':
-    os.environ["CUDA_VISIBLE_DEVICES"] = "0"
+    os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3,4,5,6,7"
 
     ## about model
     num_classes = 10
 
     ## about data
-    data_dir = "../hw2_dataset/" ## You need to specify the data_dir first
+    data_dir = "~/hw2/hw2_dataset/" ## You need to specify the data_dir first
     input_size = 224
     batch_size = 36
 
@@ -79,7 +80,7 @@ if __name__ == '__main__':
 
     ## model initialization
     model = models.model_A(num_classes=num_classes)
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = model.to(device)
 
     ## data preparation
