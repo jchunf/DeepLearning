@@ -5,7 +5,7 @@ import data
 import models
 import os
 
-#jcf
+#jcftest
 ## Note that: here we provide a basic solution for training and validation.
 ## You can directly change it if you find something wrong or not good enough.
 
