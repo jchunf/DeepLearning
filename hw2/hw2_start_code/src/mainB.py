@@ -60,38 +60,43 @@ def train_model(model, train_loader, valid_loader, criterion, optimizer, num_epo
         print("training: {:.4f}, {:.4f}".format(train_loss, train_acc))
         valid_loss, valid_acc = valid(model, valid_loader, criterion)
         print("validation: {:.4f}, {:.4f}".format(valid_loss, valid_acc))
+
         vis.line(
             X=[epoch],
             Y=[train_loss],
-            win='train_loss_modelA',
-            name='train_loss_SGD',
-            opts=dict(title='train_loss_modelA', showlegend=True),
+            win='train_loss_modelB',
+            name='train_loss_Data_Augmentation',
+            opts=dict(title='train_loss_modelB', showlegend=True),
             update='append')
         vis.line(
             X=[epoch],
             Y=[valid_loss],
-            win='valid_loss_modelA',
-            name='valid_loss_SGD',
-            opts=dict(title='valid_loss_modelA', showlegend=True),
+            win='valid_loss_modelB',
+            name='valid_loss_Data_Augmentation',
+            opts=dict(title='valid_loss_modelB', showlegend=True),
             update='append')
         vis.line(
             X=[epoch],
             Y=[train_acc],
-            win='train_acc_modelA',
-            name='train_acc_SGD',
-            opts=dict(title='train_acc_modelA', showlegend=True),
+            win='train_acc_modelB',
+            name='train_acc_Data_Augmentation',
+            opts=dict(title='train_acc_modelB', showlegend=True),
             update='append')
         vis.line(
             X=[epoch],
             Y=[valid_acc],
-            win='valid_acc_modelA',
-            name='valid_acc_SGD',
-            opts=dict(title='valid_acc_modelA', showlegend=True),
+            win='valid_acc_modelB',
+            name='valid_acc_Data_Augmentation',
+            opts=dict(title='valid_acc_modelB', showlegend=True),
             update='append')
+
+        #s.step()
         if valid_acc > best_acc:
             best_acc = valid_acc
             best_model = model
             torch.save(best_model, 'best_model.pt')
+        print("best acc:", best_acc)
+
 
 
 if __name__ == '__main__':
@@ -106,22 +111,24 @@ if __name__ == '__main__':
     batch_size = 36
 
     ## about training
-    num_epochs = 100
+    num_epochs = 200
     lr = 0.001
+    steps = [40, 80, 120, 160]
 
     ## model initialization
-    model = models.model_A(num_classes=num_classes)
+    model = models.model_B(num_classes=num_classes)
     device = torch.device("cuda:3" if torch.cuda.is_available() else "cpu")
     model = model.to(device)
 
     ## data preparation
-    train_loader, valid_loader = data.load_data(data_dir=data_dir, input_size=input_size, batch_size=batch_size)
+    train_loader, valid_loader = data.load_data(data_dir=data_dir,
+                                                train_dir='2-Medium-Scale',
+                                                input_size=input_size,
+                                                batch_size=batch_size)
 
     ## optimizer
-    optimizer = optim.SGD(model.parameters(), lr=lr,momentum=0.9)
-    #Adam
-    #RMSprop
-
+    optimizer = optim.Adam(model.parameters(), lr=lr,weight_decay=4e-5, amsgrad=False)
+    #s = optim.lr_scheduler.MultiStepLR(optimizer, milestones=steps, gamma=0.1)
     ## loss function
     criterion = nn.CrossEntropyLoss()
     train_model(model, train_loader, valid_loader, criterion, optimizer, num_epochs=num_epochs)

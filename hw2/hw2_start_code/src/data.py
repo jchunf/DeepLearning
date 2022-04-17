@@ -9,9 +9,10 @@ import os
 ## mean_vals = [0.485, 0.456, 0.406]
 ## std_vals = [0.229, 0.224, 0.225]
 
-def load_data(data_dir = "../data/",input_size = 224,batch_size = 36):
+def load_data(data_dir = "../data/",train_dir="1-Large-Scale",test_dir="test",input_size = 224,batch_size = 36):
     data_transforms = {
         'train': transforms.Compose([
+            transforms.Resize(input_size),
             transforms.RandomResizedCrop(input_size),
             transforms.RandomHorizontalFlip(),
             transforms.ToTensor(),
@@ -26,8 +27,8 @@ def load_data(data_dir = "../data/",input_size = 224,batch_size = 36):
     }
     ## The default dir is for the first task of large-scale deep learning
     ## For other tasks, you may need to modify the data dir or even rewrite some part of 'data.py'
-    image_dataset_train = datasets.ImageFolder(os.path.join(data_dir, '1-Large-Scale', 'train'), data_transforms['train'])
-    image_dataset_valid = datasets.ImageFolder(os.path.join(data_dir,'test'), data_transforms['test'])
+    image_dataset_train = datasets.ImageFolder(os.path.join(data_dir, train_dir, 'train'), data_transforms['train'])
+    image_dataset_valid = datasets.ImageFolder(os.path.join(data_dir,test_dir), data_transforms['test'])
 
     train_loader = DataLoader(image_dataset_train, batch_size=batch_size, shuffle=True, num_workers=4)
     valid_loader = DataLoader(image_dataset_valid, batch_size=batch_size, shuffle=False, num_workers=4)

@@ -1,5 +1,6 @@
 from torchvision import models
 import torch.nn as nn
+from res_jcf import ultranet18
 
 
 def model_A(num_classes):
@@ -10,7 +11,8 @@ def model_A(num_classes):
 
 def model_B(num_classes):
     ## your code here
-    pass
+    model = ultranet18(num_classes)
+    return  model
 
 
 def model_C(num_classes):
