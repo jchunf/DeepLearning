@@ -91,7 +91,7 @@ def train_model(model, train_loader, valid_loader, criterion, optimizer, num_epo
         if valid_acc > best_acc:
             best_acc = valid_acc
             best_model = model
-            torch.save(best_model, 'best_model.pt')
+            torch.save(best_model, 'best_model_A.pt')
 
 
 if __name__ == '__main__':
@@ -111,7 +111,7 @@ if __name__ == '__main__':
 
     ## model initialization
     model = models.model_A(num_classes=num_classes)
-    device = torch.device("cuda:3" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model = model.to(device)
 
     ## data preparation

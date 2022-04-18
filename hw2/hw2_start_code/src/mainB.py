@@ -90,7 +90,7 @@ def train_model(model, train_loader, valid_loader, criterion, optimizer, num_epo
             opts=dict(title='valid_acc_modelB', showlegend=True),
             update='append')
 
-        #s.step()
+        s.step()
         if valid_acc > best_acc:
             best_acc = valid_acc
             best_model = model
@@ -128,7 +128,7 @@ if __name__ == '__main__':
 
     ## optimizer
     optimizer = optim.Adam(model.parameters(), lr=lr,weight_decay=4e-5, amsgrad=False)
-    #s = optim.lr_scheduler.MultiStepLR(optimizer, milestones=steps, gamma=0.1)
+    s = optim.lr_scheduler.MultiStepLR(optimizer, milestones=steps, gamma=0.1)
     ## loss function
     criterion = nn.CrossEntropyLoss()
     train_model(model, train_loader, valid_loader, criterion, optimizer, num_epochs=num_epochs)
